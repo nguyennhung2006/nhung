@@ -38,6 +38,26 @@ export const AuthProvider = ({ children }) => {
     } catch (e) {}
   }, [needsHumanAssistance]);
 
+  // Real-time cross-tab sync for assistance alerts
+  useEffect(() => {
+    const syncAuthStorage = () => {
+      try {
+        const savedAssist = localStorage.getItem('visage_needs_assistance');
+        if (savedAssist !== null) {
+          const parsed = JSON.parse(savedAssist);
+          setNeedsHumanAssistance(prev => prev !== parsed ? parsed : prev);
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener('storage', syncAuthStorage);
+    const timerId = setInterval(syncAuthStorage, 1000);
+    return () => {
+      window.removeEventListener('storage', syncAuthStorage);
+      clearInterval(timerId);
+    };
+  }, []);
+
   const login = (role, name, id) => {
     setUser({ role, name, id });
   };

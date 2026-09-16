@@ -117,6 +117,36 @@ export const DataProvider = ({ children }) => {
     } catch (e) {}
   }, [handoffCustomerName]);
 
+  // Real-time cross-tab & interval synchronization listener
+  useEffect(() => {
+    const syncFromStorage = () => {
+      try {
+        const savedMsgs = localStorage.getItem('visage_live_chat_messages');
+        if (savedMsgs) {
+          const parsed = JSON.parse(savedMsgs);
+          setLiveChatMessages(prev => JSON.stringify(prev) !== savedMsgs ? parsed : prev);
+        }
+        const savedActive = localStorage.getItem('visage_is_handoff_active');
+        if (savedActive !== null) {
+          const parsedActive = JSON.parse(savedActive);
+          setIsHandoffActive(prev => prev !== parsedActive ? parsedActive : prev);
+        }
+        const savedName = localStorage.getItem('visage_handoff_customer_name');
+        if (savedName) {
+          setHandoffCustomerName(prev => prev !== savedName ? savedName : prev);
+        }
+      } catch (e) {}
+    };
+
+    window.addEventListener('storage', syncFromStorage);
+    const intervalId = setInterval(syncFromStorage, 1000); // 1-second real-time poll fallback
+
+    return () => {
+      window.removeEventListener('storage', syncFromStorage);
+      clearInterval(intervalId);
+    };
+  }, []);
+
   const startHandoff = (initialText, customerName = 'Khách Hàng') => {
     setIsHandoffActive(true);
     setHandoffCustomerName(customerName);
