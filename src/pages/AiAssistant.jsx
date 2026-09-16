@@ -92,7 +92,12 @@ export default function AiAssistant() {
     ]);
   };
 
-  const handleEndConsultation = () => {
+  const handleEndConsultation = (e) => {
+    e?.preventDefault();
+    try {
+      localStorage.setItem('visage_is_handoff_active', 'false');
+      localStorage.setItem('visage_needs_assistance', 'false');
+    } catch (err) {}
     resolveHandoff();
     endHandoff();
     setMessages(prev => [

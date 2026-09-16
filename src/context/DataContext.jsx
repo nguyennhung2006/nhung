@@ -149,6 +149,9 @@ export const DataProvider = ({ children }) => {
 
   const startHandoff = (initialText, customerName = 'Khách Hàng') => {
     setIsHandoffActive(true);
+    try {
+      localStorage.setItem('visage_is_handoff_active', 'true');
+    } catch (e) {}
     setHandoffCustomerName(customerName);
     const newMsg = {
       id: Date.now(),
@@ -184,6 +187,9 @@ export const DataProvider = ({ children }) => {
 
   const endHandoff = () => {
     setIsHandoffActive(false);
+    try {
+      localStorage.setItem('visage_is_handoff_active', 'false');
+    } catch (e) {}
   };
 
   // --- User CRUD ---

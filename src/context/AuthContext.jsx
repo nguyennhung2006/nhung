@@ -68,10 +68,16 @@ export const AuthProvider = ({ children }) => {
 
   const triggerHandoff = () => {
     setNeedsHumanAssistance(true);
+    try {
+      localStorage.setItem('visage_needs_assistance', 'true');
+    } catch (e) {}
   };
   
   const resolveHandoff = () => {
     setNeedsHumanAssistance(false);
+    try {
+      localStorage.setItem('visage_needs_assistance', 'false');
+    } catch (e) {}
   };
 
   return (
