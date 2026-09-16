@@ -92,6 +92,21 @@ export default function AiAssistant() {
     ]);
   };
 
+  const handleEndConsultation = () => {
+    resolveHandoff();
+    endHandoff();
+    setMessages(prev => [
+      ...prev,
+      {
+        id: Date.now(),
+        sender: 'ai',
+        text: '✨ **ĐÃ KẾT THÚC PHIÊN TƯ VẤN TRỰC TIẾP.**\n\nBé Mèo AI 🐾 đã quay trở lại phục vụ bạn! Bạn muốn hỏi Bé Mèo điều gì tiếp theo ạ? 🌸',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        reactions: { like: false, dislike: false }
+      }
+    ]);
+  };
+
   const handleClearHistory = () => {
     localStorage.removeItem('visage_ai_messages');
     setMessages([
@@ -475,9 +490,27 @@ export default function AiAssistant() {
         </div>
 
         {(isHandoffActive || needsHumanAssistance) && (
-          <div style={{ background: '#FFF3E0', borderBottom: '1px solid #FFE0B2', padding: '0.8rem 1.5rem', color: '#E65100', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div style={{ background: '#FFF3E0', borderBottom: '1px solid #FFE0B2', padding: '0.8rem 1.5rem', color: '#E65100', fontSize: '0.9rem', fontWeight: 600, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
             <span>🟢 Đang chat 1-1 trực tiếp với Chuyên viên Tư vấn Trần Khánh Linh</span>
-            <span style={{ fontSize: '0.8rem', background: '#E65100', color: 'white', padding: '2px 8px', borderRadius: '10px' }}>LIVE CHAT</span>
+            <button
+              onClick={handleEndConsultation}
+              style={{
+                background: '#D32F2F',
+                color: 'white',
+                border: 'none',
+                padding: '5px 14px',
+                borderRadius: '16px',
+                fontSize: '0.82rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px',
+                boxShadow: '0 2px 8px rgba(211, 47, 47, 0.3)'
+              }}
+            >
+              🛑 Kết thúc tư vấn (Quay lại Chatbot AI)
+            </button>
           </div>
         )}
 
