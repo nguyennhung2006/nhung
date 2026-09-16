@@ -38,6 +38,8 @@ export default function AiAssistant() {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState(null);
   const [isListening, setIsListening] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState(() => localStorage.getItem('visage_gemini_api_key') || '');
+  const [showKeyModal, setShowKeyModal] = useState(false);
   const chatEndRef = useRef(null);
 
   useEffect(() => {
@@ -269,8 +271,36 @@ export default function AiAssistant() {
     setIsLoading(true);
 
     try {
-      await new Promise(r => setTimeout(r, 500));
-      const aiReplyText = generateSmartAnswer(userQuery);
+      let aiReplyText = '';
+
+      if (geminiApiKey && geminiApiKey.trim()) {
+        try {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey.trim()}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{
+                  text: `Bạn là "Bé Mèo AI" 🐾✨ - Trợ lý Spa thông minh chính thức của Visage Spa. Hãy trả lời thân thiện, hữu ích bằng markdown định dạng chữ in đậm, bullet points cho câu hỏi: ${userQuery}`
+                }]
+              }]
+            })
+          });
+
+          if (res.ok) {
+            const data = await res.json();
+            const textReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (textReply) aiReplyText = textReply;
+          }
+        } catch (e) {
+          console.warn('Gemini API call fallback to knowledge engine:', e);
+        }
+      }
+
+      if (!aiReplyText) {
+        await new Promise(r => setTimeout(r, 400));
+        aiReplyText = generateSmartAnswer(userQuery);
+      }
 
       const aiMsg = {
         id: Date.now() + 1,
@@ -393,6 +423,26 @@ export default function AiAssistant() {
           </div>
 
           <div className="ai-header-controls" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <button
+              onClick={() => setShowKeyModal(true)}
+              style={{
+                background: geminiApiKey ? 'linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%)' : 'rgba(255,255,255,0.2)',
+                color: 'white',
+                border: '1px solid rgba(255,255,255,0.3)',
+                padding: '0.45rem 0.85rem',
+                borderRadius: '20px',
+                fontWeight: 600,
+                fontSize: '0.82rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px'
+              }}
+              title="Cấu hình Google Gemini API Key"
+            >
+              🔑 {geminiApiKey ? 'Gemini Active' : 'Nhập Key Gemini'}
+            </button>
+
             <button
               onClick={handleConnectConsultant}
               style={{
@@ -569,6 +619,64 @@ export default function AiAssistant() {
         <div className="ai-disclaimer">
           🐾 Bé Mèo AI - Trợ lý Trí Tuệ Nhân Tạo chính thức của Visage Spa.
         </div>
+
+        {/* Gemini API Key Settings Modal */}
+        {showKeyModal && (
+          <div style={{
+            position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(5px)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            zIndex: 9999, padding: '1rem'
+          }}>
+            <div style={{
+              background: 'white', borderRadius: '16px', padding: '2rem',
+              maxWidth: '480px', width: '100%', boxShadow: '0 20px 40px rgba(0,0,0,0.3)'
+            }}>
+              <h3 style={{ margin: '0 0 0.5rem 0', fontFamily: 'var(--font-serif)', color: 'var(--color-secondary)', fontSize: '1.4rem' }}>
+                🔑 Cấu Hình Google Gemini API Key
+              </h3>
+              <p style={{ fontSize: '0.9rem', color: '#666', lineHeight: 1.6, marginBottom: '1.2rem' }}>
+                Nhập Gemini API Key từ <strong>Google AI Studio</strong> để Chatbot gọi trực tiếp mô hình <code>gemini-1.5-flash</code>. Nếu để trống, Chatbot sẽ dùng Động cơ AI Tri thức mặc định siêu tốc!
+              </p>
+
+              <input 
+                type="text" 
+                className="form-input"
+                value={geminiApiKey}
+                onChange={(e) => setGeminiApiKey(e.target.value)}
+                placeholder="Dán mã API Key dạng AIzaSy..."
+                style={{ borderRadius: '10px', padding: '0.8rem 1rem', marginBottom: '1.5rem', fontSize: '0.95rem' }}
+              />
+
+              <div style={{ display: 'flex', gap: '0.8rem', justifyContent: 'flex-end' }}>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    localStorage.removeItem('visage_gemini_api_key');
+                    setGeminiApiKey('');
+                    setShowKeyModal(false);
+                    alert('Đã xóa Key Gemini. Chatbot sẽ dùng mô hình AI tri thức mặc định!');
+                  }}
+                  className="btn"
+                  style={{ background: '#f5f5f5', color: '#666' }}
+                >
+                  Xóa Key
+                </button>
+                <button 
+                  type="button" 
+                  onClick={() => {
+                    localStorage.setItem('visage_gemini_api_key', geminiApiKey.trim());
+                    setShowKeyModal(false);
+                    alert('✅ Đã lưu Gemini API Key thành công!');
+                  }}
+                  className="btn btn-primary"
+                >
+                  Lưu Cấu Hình
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
